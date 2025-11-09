@@ -27,24 +27,29 @@ import javax.swing.border.EmptyBorder;
 
 /**
  * Main frame for the Sort Visualizer application with comparison mode.
+ * FIXES:
+ * 1. Stop button now properly stops both algorithms in comparison mode
+ * 2. Audio toggle can be changed during sorting
+ * 3. Time display shows correct elapsed time
  */
 public class SortVisualizerFrame extends JFrame {
   // UI Components
   private BarPanel barPanel;
-  private BarPanel barPanel1; // For comparison mode
-  private BarPanel barPanel2; // For comparison mode
+  private BarPanel barPanel1;
+  private BarPanel barPanel2;
   private JPanel visualizationPanel;
   private CardLayout vizCardLayout;
 
   private final JComboBox<String> algoCombo;
-  private final JComboBox<String> algoCombo1; // For comparison
-  private final JComboBox<String> algoCombo2; // For comparison
+  private final JComboBox<String> algoCombo1;
+  private final JComboBox<String> algoCombo2;
   private final JSlider sizeSlider;
   private final JSlider speedSlider;
   private final JCheckBox soundToggle;
   private final JButton startBtn;
   private final JButton stopBtn;
   private final JToggleButton compareToggle;
+  private final JButton backToSingleBtn;
   private final JLabel sizeLabel;
   private final JLabel speedLabel;
   private final JLabel algoDescLabel;
@@ -59,6 +64,8 @@ public class SortVisualizerFrame extends JFrame {
   private volatile Thread timerThread2;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final AtomicBoolean stopRequested = new AtomicBoolean(false);
+  private final AtomicBoolean stopRequested1 = new AtomicBoolean(false);
+  private final AtomicBoolean stopRequested2 = new AtomicBoolean(false);
   private volatile long startTime = 0;
   private volatile long startTime1 = 0;
   private volatile long startTime2 = 0;
@@ -106,7 +113,6 @@ public class SortVisualizerFrame extends JFrame {
 
     this.toneGenerator = new ToneGenerator();
 
-    // Initialize panels
     this.barPanel = new BarPanel();
     this.barPanel1 = new BarPanel();
     this.barPanel2 = new BarPanel();
@@ -114,11 +120,10 @@ public class SortVisualizerFrame extends JFrame {
     barPanel1.setComparisonMode(true, "Algorithm 1");
     barPanel2.setComparisonMode(true, "Algorithm 2");
 
-    // Initialize controls
     algoCombo = createStyledComboBox();
     algoCombo1 = createStyledComboBox();
     algoCombo2 = createStyledComboBox();
-    algoCombo2.setSelectedIndex(3); // Default to Merge Sort for second
+    algoCombo2.setSelectedIndex(3);
 
     sizeSlider = createStyledSlider(10, 400, 100);
     speedSlider = createStyledSlider(1, 100, 60);
@@ -130,6 +135,9 @@ public class SortVisualizerFrame extends JFrame {
 
     compareToggle = new JToggleButton("⚖ Compare Mode");
     styleToggleButton(compareToggle);
+
+    backToSingleBtn = createStyledButton("← Single Mode", new Color(100, 116, 139), new Color(71, 85, 105));
+    backToSingleBtn.setVisible(false);
 
     sizeLabel = new JLabel("100");
     speedLabel = new JLabel("60");
@@ -145,11 +153,8 @@ public class SortVisualizerFrame extends JFrame {
     comparisonResultLabel.setForeground(new Color(59, 130, 246));
     comparisonResultLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-    // Build UI
     setupUI();
     setupListeners();
-
-    // Generate initial data
     generateData();
   }
 
@@ -232,7 +237,6 @@ public class SortVisualizerFrame extends JFrame {
     JPanel mainContainer = new JPanel(new BorderLayout(0, 0));
     mainContainer.setBackground(BG_COLOR);
 
-    // Top control panel
     JPanel topPanel = new JPanel(new BorderLayout(0, 0));
     topPanel.setBackground(BG_COLOR);
     topPanel.setBorder(new EmptyBorder(20, 20, 15, 20));
@@ -243,11 +247,9 @@ public class SortVisualizerFrame extends JFrame {
         BorderFactory.createLineBorder(BORDER_COLOR, 1),
         new EmptyBorder(20, 20, 20, 20)));
 
-    // Algorithm selection - changes based on mode
     JPanel algoSelectionPanel = new JPanel(new CardLayout());
     algoSelectionPanel.setBackground(PANEL_BG);
 
-    // Single mode panel
     JPanel singleAlgoPanel = new JPanel(new BorderLayout(8, 8));
     singleAlgoPanel.setBackground(PANEL_BG);
     JLabel algoLabel = new JLabel("Algorithm");
@@ -257,7 +259,6 @@ public class SortVisualizerFrame extends JFrame {
     singleAlgoPanel.add(algoCombo, BorderLayout.CENTER);
     singleAlgoPanel.add(algoDescLabel, BorderLayout.SOUTH);
 
-    // Comparison mode panel
     JPanel compAlgoPanel = new JPanel(new GridLayout(2, 1, 0, 15));
     compAlgoPanel.setBackground(PANEL_BG);
 
@@ -283,7 +284,6 @@ public class SortVisualizerFrame extends JFrame {
     algoSelectionPanel.add(singleAlgoPanel, "single");
     algoSelectionPanel.add(compAlgoPanel, "compare");
 
-    // Slider panel
     JPanel sliderPanel = new JPanel(new GridLayout(2, 1, 0, 15));
     sliderPanel.setBackground(PANEL_BG);
 
@@ -293,15 +293,17 @@ public class SortVisualizerFrame extends JFrame {
     sliderPanel.add(sizePanel);
     sliderPanel.add(speedPanel);
 
-    // Button panel
     JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
     buttonPanel.setBackground(PANEL_BG);
     buttonPanel.add(compareToggle);
+    buttonPanel.add(backToSingleBtn);
     buttonPanel.add(soundToggle);
     buttonPanel.add(startBtn);
     buttonPanel.add(stopBtn);
+    
+    // Ensure stop button is always visible
+    stopBtn.setVisible(true);
 
-    // Combine sections
     JPanel leftSection = new JPanel(new BorderLayout(0, 15));
     leftSection.setBackground(PANEL_BG);
     leftSection.add(algoSelectionPanel, BorderLayout.CENTER);
@@ -315,7 +317,6 @@ public class SortVisualizerFrame extends JFrame {
     controlCard.add(contentGrid, BorderLayout.CENTER);
     topPanel.add(controlCard, BorderLayout.CENTER);
 
-    // Visualization panel with CardLayout
     JPanel vizContainer = new JPanel(new BorderLayout());
     vizContainer.setBackground(BG_COLOR);
     vizContainer.setBorder(new EmptyBorder(0, 20, 20, 20));
@@ -324,7 +325,6 @@ public class SortVisualizerFrame extends JFrame {
     visualizationPanel = new JPanel(vizCardLayout);
     visualizationPanel.setBackground(BG_COLOR);
 
-    // Single visualization
     JPanel singleVizCard = new JPanel(new BorderLayout());
     singleVizCard.setBackground(PANEL_BG);
     singleVizCard.setBorder(BorderFactory.createCompoundBorder(
@@ -332,7 +332,6 @@ public class SortVisualizerFrame extends JFrame {
         new EmptyBorder(2, 2, 2, 2)));
     singleVizCard.add(barPanel, BorderLayout.CENTER);
 
-    // Comparison visualization
     JPanel compVizCard = new JPanel(new BorderLayout(0, 10));
     compVizCard.setBackground(BG_COLOR);
 
@@ -356,7 +355,6 @@ public class SortVisualizerFrame extends JFrame {
     compGrid.add(viz1Card);
     compGrid.add(viz2Card);
 
-    // Result panel
     JPanel resultPanel = new JPanel(new BorderLayout());
     resultPanel.setBackground(PANEL_BG);
     resultPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -403,6 +401,17 @@ public class SortVisualizerFrame extends JFrame {
     startBtn.addActionListener(e -> startSorting());
     stopBtn.addActionListener(e -> requestStop());
 
+    backToSingleBtn.addActionListener(e -> {
+      if (running.get()) {
+        JOptionPane.showMessageDialog(this,
+            "Please stop the current sorting before changing mode.",
+            "Cannot Change Mode", JOptionPane.WARNING_MESSAGE);
+        return;
+      }
+      compareToggle.setSelected(false);
+      switchToSingleMode();
+    });
+
     compareToggle.addActionListener(e -> {
       if (running.get()) {
         compareToggle.setSelected(!compareToggle.isSelected());
@@ -413,19 +422,11 @@ public class SortVisualizerFrame extends JFrame {
       }
 
       boolean isCompare = compareToggle.isSelected();
-      CardLayout algoLayout = (CardLayout) ((JPanel) algoCombo.getParent().getParent()).getLayout();
-      algoLayout.show((JPanel) algoCombo.getParent().getParent(), isCompare ? "compare" : "single");
-      vizCardLayout.show(visualizationPanel, isCompare ? "compare" : "single");
-
       if (isCompare) {
-        compareToggle.setBackground(new Color(139, 92, 246));
-        compareToggle.setText("⚖ Compare Mode ✓");
+        switchToCompareMode();
       } else {
-        compareToggle.setBackground(new Color(59, 130, 246));
-        compareToggle.setText("⚖ Compare Mode");
+        switchToSingleMode();
       }
-
-      generateData();
     });
 
     algoCombo.addActionListener(e -> {
@@ -456,6 +457,30 @@ public class SortVisualizerFrame extends JFrame {
     });
   }
 
+  private void switchToCompareMode() {
+    CardLayout algoLayout = (CardLayout) ((JPanel) algoCombo.getParent().getParent()).getLayout();
+    algoLayout.show((JPanel) algoCombo.getParent().getParent(), "compare");
+    vizCardLayout.show(visualizationPanel, "compare");
+
+    compareToggle.setBackground(new Color(139, 92, 246));
+    compareToggle.setText("⚖ Compare Mode ✓");
+    backToSingleBtn.setVisible(true);
+
+    generateData();
+  }
+
+  private void switchToSingleMode() {
+    CardLayout algoLayout = (CardLayout) ((JPanel) algoCombo.getParent().getParent()).getLayout();
+    algoLayout.show((JPanel) algoCombo.getParent().getParent(), "single");
+    vizCardLayout.show(visualizationPanel, "single");
+
+    compareToggle.setBackground(new Color(59, 130, 246));
+    compareToggle.setText("⚖ Compare Mode");
+    backToSingleBtn.setVisible(false);
+
+    generateData();
+  }
+
   private void generateData() {
     if (running.get())
       return;
@@ -482,6 +507,8 @@ public class SortVisualizerFrame extends JFrame {
 
     running.set(true);
     stopRequested.set(false);
+    stopRequested1.set(false);
+    stopRequested2.set(false);
     toneGenerator.reset();
     setControlsEnabled(false);
 
@@ -506,7 +533,17 @@ public class SortVisualizerFrame extends JFrame {
     SortingAlgorithms sorter = new SortingAlgorithms(
         arr, this, null, stopRequested, soundToggle.isSelected(), toneGenerator, false);
 
-    timerThread = createTimerThread(barPanel, startTime);
+    timerThread = new Thread(() -> {
+      while (running.get() && !Thread.currentThread().isInterrupted()) {
+        try {
+          Thread.sleep(100);
+          long elapsed = (System.currentTimeMillis() - startTime) / 1000;
+          SwingUtilities.invokeLater(() -> barPanel.setElapsedTime(elapsed));
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+    }, "timer-thread");
     timerThread.start();
 
     workerThread = new Thread(() -> {
@@ -547,12 +584,34 @@ public class SortVisualizerFrame extends JFrame {
     comparisonResultLabel.setForeground(new Color(251, 191, 36));
 
     SortingAlgorithms sorter1 = new SortingAlgorithms(
-        arr1, null, this, stopRequested, false, toneGenerator, true);
+        arr1, null, this, stopRequested1, soundToggle.isSelected(), toneGenerator, false);
     SortingAlgorithms sorter2 = new SortingAlgorithms(
-        arr2, null, this, stopRequested, false, toneGenerator, true);
+        arr2, null, this, stopRequested2, soundToggle.isSelected(), toneGenerator, true);
 
-    timerThread1 = createTimerThread(barPanel1, startTime1);
-    timerThread2 = createTimerThread(barPanel2, startTime2);
+    timerThread1 = new Thread(() -> {
+      while (running.get() && !Thread.currentThread().isInterrupted()) {
+        try {
+          Thread.sleep(100);
+          long elapsed = (System.currentTimeMillis() - startTime1) / 1000;
+          SwingUtilities.invokeLater(() -> barPanel1.setElapsedTime(elapsed));
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+    }, "timer-thread-1");
+    
+    timerThread2 = new Thread(() -> {
+      while (running.get() && !Thread.currentThread().isInterrupted()) {
+        try {
+          Thread.sleep(100);
+          long elapsed = (System.currentTimeMillis() - startTime2) / 1000;
+          SwingUtilities.invokeLater(() -> barPanel2.setElapsedTime(elapsed));
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
+    }, "timer-thread-2");
+    
     timerThread1.start();
     timerThread2.start();
 
@@ -560,7 +619,7 @@ public class SortVisualizerFrame extends JFrame {
       try {
         runAlgorithm(sorter1, algo1);
         algo1Finished = true;
-        if (!stopRequested.get()) {
+        if (!stopRequested1.get()) {
           SwingUtilities.invokeLater(() -> {
             barPanel1.setSortedState();
             checkComparisonComplete();
@@ -568,6 +627,12 @@ public class SortVisualizerFrame extends JFrame {
         }
       } catch (Exception e) {
         e.printStackTrace();
+      } finally {
+        synchronized (this) {
+          if (algo1Finished && algo2Finished) {
+            SwingUtilities.invokeLater(this::resetUiAfterRun);
+          }
+        }
       }
     }, "sort-worker-1");
 
@@ -575,7 +640,7 @@ public class SortVisualizerFrame extends JFrame {
       try {
         runAlgorithm(sorter2, algo2);
         algo2Finished = true;
-        if (!stopRequested.get()) {
+        if (!stopRequested2.get()) {
           SwingUtilities.invokeLater(() -> {
             barPanel2.setSortedState();
             checkComparisonComplete();
@@ -583,6 +648,12 @@ public class SortVisualizerFrame extends JFrame {
         }
       } catch (Exception e) {
         e.printStackTrace();
+      } finally {
+        synchronized (this) {
+          if (algo1Finished && algo2Finished) {
+            SwingUtilities.invokeLater(this::resetUiAfterRun);
+          }
+        }
       }
     }, "sort-worker-2");
 
@@ -618,23 +689,7 @@ public class SortVisualizerFrame extends JFrame {
 
       comparisonResultLabel.setText(result.toString());
       comparisonResultLabel.setForeground(new Color(16, 185, 129));
-
-      resetUiAfterRun();
     }
-  }
-
-  private Thread createTimerThread(BarPanel panel, long startTime) {
-    return new Thread(() -> {
-      while (running.get() && !stopRequested.get()) {
-        try {
-          Thread.sleep(1000);
-          long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-          SwingUtilities.invokeLater(() -> panel.setElapsedTime(elapsed));
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
-    }, "timer-thread");
   }
 
   private void runAlgorithm(SortingAlgorithms sorter, String algo) {
@@ -655,19 +710,43 @@ public class SortVisualizerFrame extends JFrame {
   }
 
   private void requestStop() {
+    if (!running.get()) {
+      return;
+    }
+    
     stopRequested.set(true);
-    stopBtn.setEnabled(false);
+    stopRequested1.set(true);
+    stopRequested2.set(true);
     toneGenerator.stopAllSounds();
-    if (timerThread != null)
+    
+    if (timerThread != null && timerThread.isAlive())
       timerThread.interrupt();
-    if (timerThread1 != null)
+    if (timerThread1 != null && timerThread1.isAlive())
       timerThread1.interrupt();
-    if (timerThread2 != null)
+    if (timerThread2 != null && timerThread2.isAlive())
       timerThread2.interrupt();
+    
+    if (workerThread != null && workerThread.isAlive())
+      workerThread.interrupt();
+    if (workerThread1 != null && workerThread1.isAlive())
+      workerThread1.interrupt();
+    if (workerThread2 != null && workerThread2.isAlive())
+      workerThread2.interrupt();
+    
+    new Thread(() -> {
+      try {
+        Thread.sleep(300);
+        SwingUtilities.invokeLater(this::resetUiAfterRun);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }, "stop-handler").start();
   }
 
   private void resetUiAfterRun() {
     running.set(false);
+    algo1Finished = false;
+    algo2Finished = false;
     toneGenerator.stopAllSounds();
     toneGenerator.reset();
     setControlsEnabled(true);
@@ -680,13 +759,17 @@ public class SortVisualizerFrame extends JFrame {
   }
 
   private void setControlsEnabled(boolean enabled) {
-    startBtn.setEnabled(enabled);
-    stopBtn.setEnabled(!enabled);
-    compareToggle.setEnabled(enabled);
-    algoCombo.setEnabled(enabled);
-    algoCombo1.setEnabled(enabled);
-    algoCombo2.setEnabled(enabled);
-    sizeSlider.setEnabled(enabled);
+    SwingUtilities.invokeLater(() -> {
+      startBtn.setEnabled(enabled);
+      stopBtn.setEnabled(!enabled);
+      compareToggle.setEnabled(enabled);
+      backToSingleBtn.setEnabled(enabled);
+      algoCombo.setEnabled(enabled);
+      algoCombo1.setEnabled(enabled);
+      algoCombo2.setEnabled(enabled);
+      sizeSlider.setEnabled(enabled);
+      soundToggle.setEnabled(true);
+    });
   }
 
   // Methods for single mode
