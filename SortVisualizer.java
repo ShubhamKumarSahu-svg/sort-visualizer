@@ -1,5 +1,4 @@
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * SortVisualizer — Main entry point for the sorting algorithm visualizer.
@@ -14,7 +13,8 @@ public class SortVisualizer {
   public static void main(String[] args) {
     SwingUtilities.invokeLater(() -> {
       try {
-        UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        // Set system look and feel for better appearance
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
       } catch (Exception e) {
         // Fall back to default look and feel
       }

@@ -1,26 +1,29 @@
 import java.util.Arrays;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Contains implementations of various sorting algorithms with visualization
- * support.
+ * support and proper comparison/swap tracking.
  */
 public class SortingAlgorithms {
   private final int[] array;
-  private final SortVisualizerFrame frame;
+  private final SortVisualizerFrame frameSingle;
+  private final SortVisualizerFrame frameCompare;
   private final AtomicBoolean stopRequested;
   private final boolean soundEnabled;
   private final ToneGenerator toneGenerator;
+  private final boolean isComparisonPanel2;
 
-  public SortingAlgorithms(int[] array, SortVisualizerFrame frame,
-      AtomicBoolean stopRequested, boolean soundEnabled,
-      ToneGenerator toneGenerator) {
+  public SortingAlgorithms(int[] array, SortVisualizerFrame frameSingle,
+      SortVisualizerFrame frameCompare, AtomicBoolean stopRequested,
+      boolean soundEnabled, ToneGenerator toneGenerator, boolean isPanel2) {
     this.array = array;
-    this.frame = frame;
+    this.frameSingle = frameSingle;
+    this.frameCompare = frameCompare;
     this.stopRequested = stopRequested;
     this.soundEnabled = soundEnabled;
     this.toneGenerator = toneGenerator;
+    this.isComparisonPanel2 = isPanel2;
   }
 
   // ===== Bubble Sort =====
@@ -29,14 +32,14 @@ public class SortingAlgorithms {
     for (int i = 0; i < n - 1 && !stopRequested.get(); i++) {
       for (int j = 0; j < n - i - 1 && !stopRequested.get(); j++) {
         highlight(j, j + 1);
-        compareTone(array[j], array[j + 1]);
+        compare(array[j], array[j + 1]);
         if (array[j] > array[j + 1]) {
           swap(j, j + 1);
         }
         stepDelay();
       }
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Selection Sort =====
@@ -46,7 +49,7 @@ public class SortingAlgorithms {
       int min = i;
       for (int j = i + 1; j < n && !stopRequested.get(); j++) {
         highlight(min, j);
-        compareTone(array[min], array[j]);
+        compare(array[min], array[j]);
         if (array[j] < array[min]) {
           min = j;
         }
@@ -56,7 +59,7 @@ public class SortingAlgorithms {
         swap(i, min);
       }
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Insertion Sort =====
@@ -66,11 +69,12 @@ public class SortingAlgorithms {
       int j = i - 1;
       while (j >= 0 && !stopRequested.get()) {
         highlight(j, j + 1);
-        compareTone(array[j], key);
+        compare(array[j], key);
         if (array[j] > key) {
           array[j + 1] = array[j];
-          swapTone(array[j], key);
-          frame.repaintBars();
+          incrementSwaps();
+          playSwap(array[j], key);
+          repaintBars();
           stepDelay();
           j--;
         } else {
@@ -78,16 +82,16 @@ public class SortingAlgorithms {
         }
       }
       array[j + 1] = key;
-      frame.repaintBars();
+      repaintBars();
       stepDelay();
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Merge Sort =====
   public void mergeSort() {
     mergeSort(0, array.length - 1, new int[array.length]);
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   private void mergeSort(int l, int r, int[] tmp) {
@@ -109,13 +113,14 @@ public class SortingAlgorithms {
         tmp[k++] = array[j++];
       }
       highlight(i - 1, j - 1);
-      compareToneSafe(i - 1, j - 1);
+      compareSafe(i - 1, j - 1);
       stepDelay();
     }
 
     for (k = l; k <= r; k++) {
       array[k] = tmp[k];
-      frame.repaintBars();
+      incrementSwaps();
+      repaintBars();
       stepDelay();
     }
   }
@@ -123,7 +128,7 @@ public class SortingAlgorithms {
   // ===== Quick Sort =====
   public void quickSort() {
     quickSort(0, array.length - 1);
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   private void quickSort(int low, int high) {
@@ -136,13 +141,13 @@ public class SortingAlgorithms {
     while (i <= j && !stopRequested.get()) {
       while (array[i] < pivot && !stopRequested.get()) {
         highlight(i, -1);
-        compareTone(array[i], pivot);
+        compare(array[i], pivot);
         i++;
         stepDelay();
       }
       while (array[j] > pivot && !stopRequested.get()) {
         highlight(j, -1);
-        compareTone(array[j], pivot);
+        compare(array[j], pivot);
         j--;
         stepDelay();
       }
@@ -169,7 +174,7 @@ public class SortingAlgorithms {
       swap(0, i);
       heapify(i, 0);
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   private void heapify(int n, int i) {
@@ -180,7 +185,7 @@ public class SortingAlgorithms {
 
       if (l < n) {
         highlight(largest, l);
-        compareTone(array[largest], array[l]);
+        compare(array[largest], array[l]);
         if (array[l] > array[largest]) {
           largest = l;
         }
@@ -188,7 +193,7 @@ public class SortingAlgorithms {
       }
       if (r < n) {
         highlight(largest, r);
-        compareTone(array[largest], array[r]);
+        compare(array[largest], array[r]);
         if (array[r] > array[largest]) {
           largest = r;
         }
@@ -213,19 +218,20 @@ public class SortingAlgorithms {
         int j = i;
         while (j >= gap && array[j - gap] > temp && !stopRequested.get()) {
           highlight(j, j - gap);
-          compareTone(array[j - gap], temp);
+          compare(array[j - gap], temp);
           array[j] = array[j - gap];
-          swapTone(array[j], temp);
-          frame.repaintBars();
+          incrementSwaps();
+          playSwap(array[j], temp);
+          repaintBars();
           stepDelay();
           j -= gap;
         }
         array[j] = temp;
-        frame.repaintBars();
+        repaintBars();
         stepDelay();
       }
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Cocktail Sort (Bidirectional Bubble Sort) =====
@@ -240,7 +246,7 @@ public class SortingAlgorithms {
       // Forward pass
       for (int i = start; i < end && !stopRequested.get(); i++) {
         highlight(i, i + 1);
-        compareTone(array[i], array[i + 1]);
+        compare(array[i], array[i + 1]);
         if (array[i] > array[i + 1]) {
           swap(i, i + 1);
           swapped = true;
@@ -256,7 +262,7 @@ public class SortingAlgorithms {
       // Backward pass
       for (int i = end - 1; i >= start && !stopRequested.get(); i--) {
         highlight(i, i + 1);
-        compareTone(array[i], array[i + 1]);
+        compare(array[i], array[i + 1]);
         if (array[i] > array[i + 1]) {
           swap(i, i + 1);
           swapped = true;
@@ -265,7 +271,7 @@ public class SortingAlgorithms {
       }
       start++;
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Comb Sort =====
@@ -286,7 +292,7 @@ public class SortingAlgorithms {
       swapped = false;
       for (int i = 0; i + gap < n && !stopRequested.get(); i++) {
         highlight(i, i + gap);
-        compareTone(array[i], array[i + gap]);
+        compare(array[i], array[i + gap]);
         if (array[i] > array[i + gap]) {
           swap(i, i + gap);
           swapped = true;
@@ -294,7 +300,7 @@ public class SortingAlgorithms {
         stepDelay();
       }
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Gnome Sort =====
@@ -305,13 +311,13 @@ public class SortingAlgorithms {
         pos++;
       } else {
         highlight(pos, pos - 1);
-        compareTone(array[pos], array[pos - 1]);
+        compare(array[pos], array[pos - 1]);
         swap(pos, pos - 1);
         pos--;
       }
       stepDelay();
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   // ===== Radix Sort (LSD) =====
@@ -321,7 +327,7 @@ public class SortingAlgorithms {
     for (int exp = 1; max / exp > 0 && !stopRequested.get(); exp *= 10) {
       countingSortByDigit(exp);
     }
-    frame.clearHighlights();
+    clearHighlights();
   }
 
   private void countingSortByDigit(int exp) {
@@ -334,6 +340,7 @@ public class SortingAlgorithms {
       int digit = (array[i] / exp) % 10;
       count[digit]++;
       highlight(i, -1);
+      incrementComparisons();
       stepDelay();
     }
 
@@ -348,6 +355,7 @@ public class SortingAlgorithms {
       output[count[digit] - 1] = array[i];
       count[digit]--;
       highlight(i, count[digit]);
+      incrementSwaps();
       stepDelay();
     }
 
@@ -355,7 +363,7 @@ public class SortingAlgorithms {
     for (int i = 0; i < n && !stopRequested.get(); i++) {
       array[i] = output[i];
       highlight(i, -1);
-      frame.repaintBars();
+      repaintBars();
       stepDelay();
     }
   }
@@ -373,6 +381,7 @@ public class SortingAlgorithms {
     for (int i = 0; i < array.length && !stopRequested.get(); i++) {
       count[array[i] - min]++;
       highlight(i, -1);
+      incrementComparisons();
       stepDelay();
     }
 
@@ -386,6 +395,7 @@ public class SortingAlgorithms {
       output[count[array[i] - min] - 1] = array[i];
       count[array[i] - min]--;
       highlight(i, -1);
+      incrementSwaps();
       stepDelay();
     }
 
@@ -393,38 +403,10 @@ public class SortingAlgorithms {
     for (int i = 0; i < array.length && !stopRequested.get(); i++) {
       array[i] = output[i];
       highlight(i, -1);
-      frame.repaintBars();
+      repaintBars();
       stepDelay();
     }
-    frame.clearHighlights();
-  }
-
-  // ===== Bogo Sort (Random/Permutation Sort) - For fun! =====
-  public void bogoSort() {
-    Random rand = new Random();
-    int attempts = 0;
-    int maxAttempts = 10000; // Prevent infinite loops
-
-    while (!isSorted() && !stopRequested.get() && attempts < maxAttempts) {
-      // Shuffle randomly
-      for (int i = array.length - 1; i > 0 && !stopRequested.get(); i--) {
-        int j = rand.nextInt(i + 1);
-        highlight(i, j);
-        swap(i, j);
-        stepDelay();
-      }
-      attempts++;
-    }
-    frame.clearHighlights();
-  }
-
-  private boolean isSorted() {
-    for (int i = 1; i < array.length; i++) {
-      if (array[i] < array[i - 1]) {
-        return false;
-      }
-    }
-    return true;
+    clearHighlights();
   }
 
   // ===== Helper methods =====
@@ -433,34 +415,96 @@ public class SortingAlgorithms {
     array[i] = array[j];
     array[j] = t;
     highlight(i, j);
-    swapTone(array[i], array[j]);
-    frame.repaintBars();
+    incrementSwaps();
+    playSwap(array[i], array[j]);
+    repaintBars();
     stepDelay();
   }
 
   private void highlight(int i, int j) {
-    frame.highlight(i, j);
+    if (frameCompare != null) {
+      if (isComparisonPanel2) {
+        frameCompare.highlight2(i, j);
+      } else {
+        frameCompare.highlight1(i, j);
+      }
+    } else if (frameSingle != null) {
+      frameSingle.highlight(i, j);
+    }
   }
 
-  private void compareTone(int v1, int v2) {
+  private void clearHighlights() {
+    if (frameCompare != null) {
+      if (isComparisonPanel2) {
+        frameCompare.clearHighlights2();
+      } else {
+        frameCompare.clearHighlights1();
+      }
+    } else if (frameSingle != null) {
+      frameSingle.clearHighlights();
+    }
+  }
+
+  private void repaintBars() {
+    if (frameCompare != null) {
+      if (isComparisonPanel2) {
+        frameCompare.repaintBars2();
+      } else {
+        frameCompare.repaintBars1();
+      }
+    } else if (frameSingle != null) {
+      frameSingle.repaintBars();
+    }
+  }
+
+  private void incrementComparisons() {
+    if (frameCompare != null) {
+      if (isComparisonPanel2) {
+        frameCompare.incrementComparisons2();
+      } else {
+        frameCompare.incrementComparisons1();
+      }
+    } else if (frameSingle != null) {
+      frameSingle.incrementComparisons();
+    }
+  }
+
+  private void incrementSwaps() {
+    if (frameCompare != null) {
+      if (isComparisonPanel2) {
+        frameCompare.incrementSwaps2();
+      } else {
+        frameCompare.incrementSwaps1();
+      }
+    } else if (frameSingle != null) {
+      frameSingle.incrementSwaps();
+    }
+  }
+
+  private void compare(int v1, int v2) {
+    incrementComparisons();
     if (soundEnabled) {
       toneGenerator.playCompare(v1, v2);
     }
   }
 
-  private void compareToneSafe(int i, int j) {
+  private void compareSafe(int i, int j) {
     if (i >= 0 && j >= 0 && i < array.length && j < array.length) {
-      compareTone(array[i], array[j]);
+      compare(array[i], array[j]);
     }
   }
 
-  private void swapTone(int v1, int v2) {
+  private void playSwap(int v1, int v2) {
     if (soundEnabled) {
       toneGenerator.playSwap(v1, v2);
     }
   }
 
   private void stepDelay() {
-    frame.stepDelay();
+    if (frameCompare != null) {
+      frameCompare.stepDelay();
+    } else if (frameSingle != null) {
+      frameSingle.stepDelay();
+    }
   }
 }
