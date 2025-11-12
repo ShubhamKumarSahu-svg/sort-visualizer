@@ -7,12 +7,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.Arrays;
-
 import javax.swing.JPanel;
 
-/**
- * Modern panel that displays bars with smooth gradients and animations.
- */
 public class BarPanel extends JPanel {
   private int[] values = new int[0];
   private int maxVal = 1;
@@ -28,20 +24,14 @@ public class BarPanel extends JPanel {
   private boolean isComparisonMode = false;
   private String panelLabel = "";
 
-  // Modern color scheme - Dark theme
   private static final Color BG_COLOR = new Color(15, 23, 42);
   private static final Color GRID_COLOR = new Color(30, 41, 59, 60);
-
-  // Gradient colors for bars
   private static final Color BAR_START = new Color(99, 102, 241);
   private static final Color BAR_END = new Color(139, 92, 246);
-
   private static final Color HIGHLIGHT_A_START = new Color(239, 68, 68);
   private static final Color HIGHLIGHT_A_END = new Color(220, 38, 38);
-
   private static final Color HIGHLIGHT_B_START = new Color(34, 197, 94);
   private static final Color HIGHLIGHT_B_END = new Color(22, 163, 74);
-
   private static final Color SORTED_START = new Color(16, 185, 129);
   private static final Color SORTED_END = new Color(5, 150, 105);
 
@@ -149,16 +139,12 @@ public class BarPanel extends JPanel {
   protected void paintComponent(Graphics g0) {
     super.paintComponent(g0);
     Graphics2D g = (Graphics2D) g0;
-
-    // Enable anti-aliasing for smooth graphics
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
     int w = getWidth();
     int h = getHeight();
-
-    // Draw subtle grid
     drawGrid(g, w, h);
 
     if (values == null || values.length == 0) {
@@ -169,10 +155,8 @@ public class BarPanel extends JPanel {
     int n = values.length;
     double barW = Math.max(1, (double) w / n);
     int gap = n > 100 ? 0 : 1;
-
     int bottomMargin = isComparisonMode ? 70 : 80;
 
-    // Draw bars with gradients
     for (int i = 0; i < n; i++) {
       double ratio = values[i] / (double) maxVal;
       int barHeight = (int) Math.max(3, ratio * (h - bottomMargin));
@@ -180,7 +164,6 @@ public class BarPanel extends JPanel {
       int y = h - barHeight - (isComparisonMode ? 15 : 20);
       int barWidth = (int) Math.ceil(barW) - gap;
 
-      // Determine colors based on state
       Color startColor, endColor;
       if (sorted) {
         startColor = SORTED_START;
@@ -196,20 +179,15 @@ public class BarPanel extends JPanel {
         endColor = BAR_END;
       }
 
-      // Create gradient
-      GradientPaint gradient = new GradientPaint(
-          x, y, startColor,
-          x, y + barHeight, endColor);
+      GradientPaint gradient = new GradientPaint(x, y, startColor, x, y + barHeight, endColor);
       g.setPaint(gradient);
 
-      // Draw bar with rounded corners for larger bars
       if (barWidth > 3) {
         g.fillRoundRect(x, y, barWidth, barHeight, 4, 4);
       } else {
         g.fillRect(x, y, barWidth, barHeight);
       }
 
-      // Add highlight effect on top
       if (barHeight > 10) {
         g.setColor(new Color(255, 255, 255, 35));
         if (barWidth > 3) {
@@ -220,7 +198,6 @@ public class BarPanel extends JPanel {
       }
     }
 
-    // Draw info overlay
     if (isComparisonMode) {
       drawComparisonInfo(g, n, w, h);
     } else {
@@ -231,13 +208,9 @@ public class BarPanel extends JPanel {
   private void drawGrid(Graphics2D g, int w, int h) {
     g.setColor(GRID_COLOR);
     int gridSpacing = 50;
-
-    // Horizontal lines
     for (int y = 0; y < h; y += gridSpacing) {
       g.drawLine(0, y, w, y);
     }
-
-    // Vertical lines
     for (int x = 0; x < w; x += gridSpacing) {
       g.drawLine(x, 0, x, h);
     }
@@ -253,14 +226,11 @@ public class BarPanel extends JPanel {
   }
 
   private void drawComparisonInfo(Graphics2D g, int n, int w, int h) {
-    // Compact info panel for comparison mode
     g.setColor(new Color(30, 41, 59, 230));
     g.fillRoundRect(10, h - 60, w - 20, 50, 10, 10);
-
     g.setColor(new Color(71, 85, 105, 100));
     g.drawRoundRect(10, h - 60, w - 20, 50, 10, 10);
 
-    // Algorithm name with status
     g.setFont(new Font("Inter", Font.BOLD, 14));
     if (sorted) {
       g.setColor(new Color(16, 185, 129));
@@ -273,45 +243,33 @@ public class BarPanel extends JPanel {
       g.drawString("○ " + algorithmName, 20, h - 38);
     }
 
-    // Stats
     g.setFont(new Font("Inter", Font.PLAIN, 11));
     g.setColor(new Color(203, 213, 225));
-
-    String stats = String.format("C: %d | S: %d | T: %s",
-        comparisons, swaps, formatTime(elapsedSeconds));
+    String stats = String.format("C: %d | S: %d | T: %s", comparisons, swaps, formatTime(elapsedSeconds));
     g.drawString(stats, 20, h - 20);
   }
 
   private void drawInfoOverlay(Graphics2D g, int n, int w, int h) {
-    // Create semi-transparent overlay panel
     g.setColor(new Color(30, 41, 59, 230));
     g.fillRoundRect(15, 15, 380, 110, 12, 12);
-
-    // Add subtle border
     g.setColor(new Color(71, 85, 105, 100));
     g.drawRoundRect(15, 15, 380, 110, 12, 12);
 
-    // Algorithm name
     g.setColor(new Color(248, 250, 252));
     g.setFont(new Font("Inter", Font.BOLD, 17));
     g.drawString(algorithmName, 30, 42);
 
-    // Stats section
     g.setFont(new Font("Inter", Font.PLAIN, 13));
     g.setColor(new Color(203, 213, 225));
 
     int statY = 67;
     int lineHeight = 20;
-
     g.drawString("Elements: " + n, 30, statY);
     g.drawString("Speed: " + speed, 180, statY);
-
     g.drawString("Comparisons: " + comparisons, 30, statY + lineHeight);
     g.drawString("Swaps: " + swaps, 180, statY + lineHeight);
-
     g.drawString("Time: " + formatTime(elapsedSeconds), 30, statY + lineHeight * 2);
 
-    // Status indicator with proper states
     int statusX = 290;
     int statusY = statY + lineHeight * 2 - 12;
 
@@ -335,7 +293,6 @@ public class BarPanel extends JPanel {
       g.drawString("○ Ready", statusX + 18, statusY + 10);
     }
 
-    // Legend in bottom right
     drawLegend(g, w, h);
   }
 
@@ -352,12 +309,8 @@ public class BarPanel extends JPanel {
   private void drawLegend(Graphics2D g, int w, int h) {
     int legendX = w - 260;
     int legendY = h - 115;
-
-    // Legend background
     g.setColor(new Color(30, 41, 59, 230));
     g.fillRoundRect(legendX, legendY, 245, 100, 12, 12);
-
-    // Add subtle border
     g.setColor(new Color(71, 85, 105, 100));
     g.drawRoundRect(legendX, legendY, 245, 100, 12, 12);
 
@@ -366,17 +319,9 @@ public class BarPanel extends JPanel {
     g.drawString("Legend", legendX + 15, legendY + 25);
 
     g.setFont(new Font("Inter", Font.PLAIN, 12));
-
-    // Unsorted
     drawLegendItem(g, legendX + 20, legendY + 45, BAR_START, "Unsorted");
-
-    // Comparing A
     drawLegendItem(g, legendX + 20, legendY + 65, HIGHLIGHT_A_START, "Comparing A");
-
-    // Comparing B
     drawLegendItem(g, legendX + 20, legendY + 85, HIGHLIGHT_B_START, "Comparing B");
-
-    // Sorted
     drawLegendItem(g, legendX + 140, legendY + 45, SORTED_START, "Sorted");
   }
 

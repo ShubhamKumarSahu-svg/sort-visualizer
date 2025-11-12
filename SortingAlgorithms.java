@@ -1,10 +1,6 @@
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Contains implementations of various sorting algorithms with visualization
- * support and proper comparison/swap tracking.
- */
 public class SortingAlgorithms {
   private final int[] array;
   private final SortVisualizerFrame frameSingle;
@@ -26,7 +22,6 @@ public class SortingAlgorithms {
     this.isComparisonPanel2 = isPanel2;
   }
 
-  // ===== Bubble Sort =====
   public void bubbleSort() {
     int n = array.length;
     for (int i = 0; i < n - 1 && !stopRequested.get(); i++) {
@@ -42,7 +37,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Selection Sort =====
   public void selectionSort() {
     int n = array.length;
     for (int i = 0; i < n - 1 && !stopRequested.get(); i++) {
@@ -62,7 +56,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Insertion Sort =====
   public void insertionSort() {
     for (int i = 1; i < array.length && !stopRequested.get(); i++) {
       int key = array[i];
@@ -88,7 +81,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Merge Sort =====
   public void mergeSort() {
     mergeSort(0, array.length - 1, new int[array.length]);
     clearHighlights();
@@ -125,7 +117,6 @@ public class SortingAlgorithms {
     }
   }
 
-  // ===== Quick Sort =====
   public void quickSort() {
     quickSort(0, array.length - 1);
     clearHighlights();
@@ -164,7 +155,6 @@ public class SortingAlgorithms {
       quickSort(i, high);
   }
 
-  // ===== Heap Sort =====
   public void heapSort() {
     int n = array.length;
     for (int i = n / 2 - 1; i >= 0 && !stopRequested.get(); i--) {
@@ -209,7 +199,6 @@ public class SortingAlgorithms {
     }
   }
 
-  // ===== Shell Sort =====
   public void shellSort() {
     int n = array.length;
     for (int gap = n / 2; gap > 0 && !stopRequested.get(); gap /= 2) {
@@ -234,7 +223,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Cocktail Sort (Bidirectional Bubble Sort) =====
   public void cocktailSort() {
     boolean swapped = true;
     int start = 0;
@@ -242,8 +230,6 @@ public class SortingAlgorithms {
 
     while (swapped && !stopRequested.get()) {
       swapped = false;
-
-      // Forward pass
       for (int i = start; i < end && !stopRequested.get(); i++) {
         highlight(i, i + 1);
         compare(array[i], array[i + 1]);
@@ -259,7 +245,6 @@ public class SortingAlgorithms {
       swapped = false;
       end--;
 
-      // Backward pass
       for (int i = end - 1; i >= start && !stopRequested.get(); i--) {
         highlight(i, i + 1);
         compare(array[i], array[i + 1]);
@@ -274,7 +259,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Comb Sort =====
   public void combSort() {
     int n = array.length;
     int gap = n;
@@ -303,7 +287,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Gnome Sort =====
   public void gnomeSort() {
     int pos = 0;
     while (pos < array.length && !stopRequested.get()) {
@@ -320,10 +303,8 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Radix Sort (LSD) =====
   public void radixSort() {
     int max = Arrays.stream(array).max().orElse(0);
-
     for (int exp = 1; max / exp > 0 && !stopRequested.get(); exp *= 10) {
       countingSortByDigit(exp);
     }
@@ -335,7 +316,6 @@ public class SortingAlgorithms {
     int[] output = new int[n];
     int[] count = new int[10];
 
-    // Store count of occurrences
     for (int i = 0; i < n; i++) {
       int digit = (array[i] / exp) % 10;
       count[digit]++;
@@ -344,12 +324,10 @@ public class SortingAlgorithms {
       stepDelay();
     }
 
-    // Change count[i] to actual position
     for (int i = 1; i < 10; i++) {
       count[i] += count[i - 1];
     }
 
-    // Build output array
     for (int i = n - 1; i >= 0 && !stopRequested.get(); i--) {
       int digit = (array[i] / exp) % 10;
       output[count[digit] - 1] = array[i];
@@ -359,7 +337,6 @@ public class SortingAlgorithms {
       stepDelay();
     }
 
-    // Copy output to array
     for (int i = 0; i < n && !stopRequested.get(); i++) {
       array[i] = output[i];
       highlight(i, -1);
@@ -368,7 +345,6 @@ public class SortingAlgorithms {
     }
   }
 
-  // ===== Counting Sort =====
   public void countingSort() {
     int max = Arrays.stream(array).max().orElse(0);
     int min = Arrays.stream(array).min().orElse(0);
@@ -377,7 +353,6 @@ public class SortingAlgorithms {
     int[] count = new int[range];
     int[] output = new int[array.length];
 
-    // Store count
     for (int i = 0; i < array.length && !stopRequested.get(); i++) {
       count[array[i] - min]++;
       highlight(i, -1);
@@ -385,12 +360,10 @@ public class SortingAlgorithms {
       stepDelay();
     }
 
-    // Cumulative count
     for (int i = 1; i < range; i++) {
       count[i] += count[i - 1];
     }
 
-    // Build output
     for (int i = array.length - 1; i >= 0 && !stopRequested.get(); i--) {
       output[count[array[i] - min] - 1] = array[i];
       count[array[i] - min]--;
@@ -399,7 +372,6 @@ public class SortingAlgorithms {
       stepDelay();
     }
 
-    // Copy to original
     for (int i = 0; i < array.length && !stopRequested.get(); i++) {
       array[i] = output[i];
       highlight(i, -1);
@@ -409,7 +381,6 @@ public class SortingAlgorithms {
     clearHighlights();
   }
 
-  // ===== Helper methods =====
   private void swap(int i, int j) {
     int t = array[i];
     array[i] = array[j];

@@ -25,15 +25,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
-/**
- * Main frame for the Sort Visualizer application with comparison mode.
- * FIXES:
- * 1. Stop button now properly stops both algorithms in comparison mode
- * 2. Audio toggle can be changed during sorting
- * 3. Time display shows correct elapsed time
- */
+
 public class SortVisualizerFrame extends JFrame {
-  // UI Components
+ 
   private BarPanel barPanel;
   private BarPanel barPanel1;
   private BarPanel barPanel2;
@@ -55,7 +49,6 @@ public class SortVisualizerFrame extends JFrame {
   private final JLabel algoDescLabel;
   private final JLabel comparisonResultLabel;
 
-  // Sorting state
   private volatile Thread workerThread;
   private volatile Thread workerThread1;
   private volatile Thread workerThread2;
@@ -72,17 +65,17 @@ public class SortVisualizerFrame extends JFrame {
   private volatile boolean algo1Finished = false;
   private volatile boolean algo2Finished = false;
 
-  // Sound generator
+
   private final ToneGenerator toneGenerator;
 
-  // Modern color scheme
+ 
   private static final Color BG_COLOR = new Color(241, 245, 249);
   private static final Color PANEL_BG = new Color(255, 255, 255);
   private static final Color TEXT_PRIMARY = new Color(15, 23, 42);
   private static final Color TEXT_SECONDARY = new Color(100, 116, 139);
   private static final Color BORDER_COLOR = new Color(226, 232, 240);
 
-  // Algorithm descriptions
+
   private static final String[] ALGORITHMS = {
       "Bubble Sort", "Selection Sort", "Insertion Sort",
       "Merge Sort", "Quick Sort", "Heap Sort",
@@ -301,7 +294,7 @@ public class SortVisualizerFrame extends JFrame {
     buttonPanel.add(startBtn);
     buttonPanel.add(stopBtn);
     
-    // Ensure stop button is always visible
+    
     stopBtn.setVisible(true);
 
     JPanel leftSection = new JPanel(new BorderLayout(0, 15));
@@ -772,7 +765,7 @@ public class SortVisualizerFrame extends JFrame {
     });
   }
 
-  // Methods for single mode
+  
   public void highlight(int i, int j) {
     SwingUtilities.invokeLater(() -> barPanel.setHighlights(i, j));
   }
@@ -793,7 +786,7 @@ public class SortVisualizerFrame extends JFrame {
     SwingUtilities.invokeLater(() -> barPanel.incrementSwaps());
   }
 
-  // Methods for comparison mode - panel 1
+  
   public void highlight1(int i, int j) {
     SwingUtilities.invokeLater(() -> barPanel1.setHighlights(i, j));
   }
@@ -814,7 +807,7 @@ public class SortVisualizerFrame extends JFrame {
     SwingUtilities.invokeLater(() -> barPanel1.incrementSwaps());
   }
 
-  // Methods for comparison mode - panel 2
+
   public void highlight2(int i, int j) {
     SwingUtilities.invokeLater(() -> barPanel2.setHighlights(i, j));
   }

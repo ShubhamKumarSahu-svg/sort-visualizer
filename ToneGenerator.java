@@ -1,13 +1,9 @@
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Synthesizer;
 
-/**
- * Generates MIDI tones for comparison and swap operations during sorting.
- */
 public class ToneGenerator {
   private Synthesizer synth;
   private MidiChannel channel;
@@ -22,7 +18,7 @@ public class ToneGenerator {
       MidiChannel[] channels = synth.getChannels();
       if (channels != null && channels.length > 0) {
         channel = channels[0];
-        channel.programChange(0); // Acoustic Grand Piano
+        channel.programChange(0);
         available = true;
       }
     } catch (MidiUnavailableException e) {
@@ -31,18 +27,12 @@ public class ToneGenerator {
     }
   }
 
-  /**
-   * Play a tone for comparison operation
-   */
   public void playCompare(int v1, int v2) {
     if (!available || stopRequested.get())
       return;
     playPair(v1, v2, 40, 25);
   }
 
-  /**
-   * Play a tone for swap operation
-   */
   public void playSwap(int v1, int v2) {
     if (!available || stopRequested.get())
       return;
@@ -75,7 +65,6 @@ public class ToneGenerator {
           Thread.sleep(durationMs);
           channel.noteOff(pitch2);
         } catch (InterruptedException e) {
-          // Immediately stop all notes on interruption
           channel.allNotesOff();
           Thread.currentThread().interrupt();
         }
@@ -85,19 +74,12 @@ public class ToneGenerator {
     toneThread.start();
   }
 
-  /**
-   * Map a value to a MIDI pitch (note number)
-   * Values are mapped to MIDI notes 36-96 (C2 to C7)
-   */
   private int mapToPitch(int value) {
     value = Math.max(1, value);
     double normalized = Math.min(1.0, Math.log(1 + value) / Math.log(1000));
     return 36 + (int) Math.round(normalized * 60);
   }
 
-  /**
-   * Stop all currently playing sounds immediately
-   */
   public void stopAllSounds() {
     stopRequested.set(true);
     if (channel != null) {
@@ -105,7 +87,6 @@ public class ToneGenerator {
         channel.allNotesOff();
       }
     }
-    // Small delay to ensure all notes are stopped
     try {
       Thread.sleep(50);
     } catch (InterruptedException e) {
@@ -113,16 +94,10 @@ public class ToneGenerator {
     }
   }
 
-  /**
-   * Reset the stop flag to allow sounds again
-   */
   public void reset() {
     stopRequested.set(false);
   }
 
-  /**
-   * Clean up MIDI resources
-   */
   public void close() {
     stopAllSounds();
     if (synth != null && synth.isOpen()) {
@@ -130,9 +105,6 @@ public class ToneGenerator {
     }
   }
 
-  /**
-   * Check if MIDI is available
-   */
   public boolean isAvailable() {
     return available;
   }
