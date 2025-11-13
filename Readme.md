@@ -1,183 +1,200 @@
-# 🎨 Sort Visualizer Pro
+# Sort Visualizer Pro - Refactored Project Structure
 
-A modern, feature-rich sorting algorithm visualizer built with Java Swing.
+## Project Overview
 
-## ✨ Features
+A Java Swing application for visualizing sorting algorithms with sound effects and comparison mode.
 
-### **Single Mode**
+## Project Structure (10+ Files)
 
-- Visualize 12 different sorting algorithms
-- Real-time statistics (comparisons, swaps, elapsed time)
-- Adjustable array size (10-400 elements)
-- Adjustable animation speed (1-100)
-- Optional sound feedback
-- Beautiful gradient visualizations
-- Status indicators (Ready → Sorting → Sorted)
+```
+src/
+├── main/
+│   └── Main.java                          # Application entry point
+├── constants/
+│   ├── UIConstants.java                   # UI colors, fonts, dimensions
+│   └── AlgorithmConstants.java            # Algorithm names and descriptions
+├── model/
+│   └── SortingState.java                  # Manages sorting thread state
+├── audio/
+│   └── ToneGenerator.java                 # MIDI sound generation
+├── util/
+│   ├── ArrayGenerator.java                # Random array generation
+│   └── TimeFormatter.java                 # Time formatting utilities
+├── algorithms/
+│   └── SortingAlgorithms.java            # All sorting algorithm implementations
+├── ui/
+│   ├── SortVisualizerFrame.java          # Main application frame
+│   ├── callbacks/
+│   │   └── VisualizationCallback.java    # Interface for visualization updates
+│   ├── components/
+│   │   ├── UIComponentFactory.java       # Factory for styled UI components
+│   │   └── BarPanel.java                 # Custom panel for bar visualization
+│   └── controllers/
+│       └── SortController.java           # Controls sorting execution
+```
 
-### **⚖ Comparison Mode** _(NEW!)_
+## File Responsibilities
 
-- **Compare two algorithms side-by-side**
-- Same input data for fair comparison
-- Independent tracking for each algorithm
-- Real-time winner detection
-- Detailed statistics comparison:
-  - Time elapsed
-  - Number of comparisons
-  - Number of swaps
-- Visual result display showing which algorithm performed better
+### 1. **Main.java** (Entry Point)
 
-### **Supported Algorithms**
+- Application initialization
+- Sets up Look & Feel
+- Creates and displays main frame
 
-1. **Bubble Sort** - O(n²)
-2. **Selection Sort** - O(n²)
-3. **Insertion Sort** - O(n²)
-4. **Merge Sort** - O(n log n)
-5. **Quick Sort** - O(n log n) average
-6. **Heap Sort** - O(n log n)
-7. **Shell Sort** - O(n log n)
-8. **Cocktail Sort** - O(n²)
-9. **Comb Sort** - O(n²/2ᵖ)
-10. **Gnome Sort** - O(n²)
-11. **Radix Sort** - O(nk)
-12. **Counting Sort** - O(n+k)
+### 2. **UIConstants.java** (UI Configuration)
 
-## 🚀 How to Run
+- Color definitions (background, text, buttons, bars)
+- Font definitions
+- Dimension constants
+- Centralized UI styling
 
-### Prerequisites
+### 3. **AlgorithmConstants.java** (Algorithm Data)
 
-- Java 11 or higher
-- Terminal/Command Prompt
+- List of available algorithms
+- Algorithm descriptions with Big-O complexity
+- Centralized algorithm metadata
 
-### Compilation & Execution
+### 4. **SortingState.java** (State Management)
+
+- Manages worker and timer threads
+- Tracks start time and completion status
+- Provides stop request mechanism
+- Encapsulates sorting execution state
+
+### 5. **ToneGenerator.java** (Audio)
+
+- MIDI synthesizer initialization
+- Plays tones for comparisons and swaps
+- Manages audio playback lifecycle
+- Thread-safe sound generation
+
+### 6. **ArrayGenerator.java** (Utility)
+
+- Generates random integer arrays
+- Array copying functionality
+- Centralized array creation logic
+
+### 7. **TimeFormatter.java** (Utility)
+
+- Formats elapsed time (seconds, minutes)
+- Consistent time display across UI
+
+### 8. **SortingAlgorithms.java** (Core Logic)
+
+- Implements 12 sorting algorithms:
+  - Bubble, Selection, Insertion
+  - Merge, Quick, Heap
+  - Shell, Cocktail, Comb
+  - Gnome, Radix, Counting
+- Uses callback interface for visualization
+- Sound and animation integration
+
+### 9. **VisualizationCallback.java** (Interface)
+
+- Defines contract for visualization updates
+- Methods: highlight, clear, repaint, increment stats, delay
+- Decouples algorithms from UI
+
+### 10. **UIComponentFactory.java** (Component Creation)
+
+- Factory methods for styled components
+- Creates ComboBoxes, Sliders, Buttons, Labels
+- Consistent styling across application
+- Reduces code duplication
+
+### 11. **BarPanel.java** (Visualization)
+
+- Custom JPanel for bar chart rendering
+- Handles single and comparison modes
+- Displays statistics overlay
+- Gradient bars with highlights
+- Grid background and legend
+
+### 12. **SortVisualizerFrame.java** (Main UI)
+
+- Main application window
+- Layout management
+- Component initialization
+- Mode switching (single/comparison)
+- Event listener setup
+
+### 13. **SortController.java** (Control Logic)
+
+- Orchestrates sorting execution
+- Manages single and comparison sorting
+- Creates and manages threads
+- Handles start/stop operations
+- Comparison result calculation
+
+## Key Improvements
+
+### ✅ Separation of Concerns
+
+- UI separated from logic
+- Constants extracted to dedicated files
+- Controller pattern for business logic
+
+### ✅ Maintainability
+
+- Each file has a single, clear responsibility
+- Easy to locate and modify specific features
+- Reduced file sizes (all under 400 lines)
+
+### ✅ Extensibility
+
+- Easy to add new algorithms (just modify SortingAlgorithms.java and AlgorithmConstants.java)
+- Easy to add new UI themes (modify UIConstants.java)
+- Callback interface allows alternative visualizations
+
+### ✅ Testability
+
+- Algorithms can be tested independently
+- UI components can be tested in isolation
+- State management is centralized
+
+## How to Run
 
 ```bash
-# Compile all Java files
-javac *.java
+# Compile
+javac -d bin src/**/*.java
 
-# Run the application
-java SortVisualizer
+# Run
+java -cp bin main.Main
 ```
 
-## 📖 How to Use
+## Adding New Features
 
-### Single Algorithm Mode
+### Adding a New Sorting Algorithm
 
-1. **Select Algorithm**: Choose from the dropdown menu
-2. **Adjust Settings**:
-   - Array Size: Control the number of elements (10-400)
-   - Speed: Adjust animation speed (1-100)
-   - Sound: Toggle audio feedback on/off
-3. **Click "▶ Start"**: Begin visualization
-4. **Click "⏹ Stop"**: Stop at any time
+1. Add algorithm name to `AlgorithmConstants.ALGORITHMS`
+2. Add description to `AlgorithmConstants.DESCRIPTIONS`
+3. Implement method in `SortingAlgorithms.java`
+4. Add case to `SortController.runAlgorithm()`
 
-### Comparison Mode
+### Changing UI Colors
 
-1. **Click "⚖ Compare Mode"** button to switch modes
-2. **Select Two Algorithms**:
-   - Choose Algorithm 1 from the first dropdown
-   - Choose Algorithm 2 from the second dropdown
-3. **Adjust Settings**: Array size and speed apply to both
-4. **Click "▶ Start"**: Both algorithms run simultaneously
-5. **View Results**: Winner is automatically determined and displayed
+1. Modify color constants in `UIConstants.java`
+2. All components automatically use new colors
 
-### Understanding the Visualization
+### Adding New Statistics
 
-**Bar Colors:**
+1. Add field to `BarPanel.java`
+2. Add increment method
+3. Update `paintComponent()` to display
+4. Call from algorithm via callback
 
-- 🔵 **Blue/Purple**: Unsorted elements
-- 🔴 **Red**: Current comparison element (A)
-- 🟢 **Green**: Current comparison element (B)
-- 🟢 **Teal**: Sorted elements
+## Dependencies
 
-**Status Indicators:**
+- Java 11+
+- Java Swing (built-in)
+- Java Sound MIDI (built-in)
 
-- ○ **Ready**: Algorithm is ready to start
-- ● **Sorting**: Algorithm is currently running
-- ✓ **Sorted**: Algorithm has completed
+## Features
 
-## 🎯 Comparison Mode Tips
-
-### Best Comparisons to Try:
-
-1. **Fast vs Slow**:
-
-   - Quick Sort vs Bubble Sort
-   - Merge Sort vs Selection Sort
-
-2. **Similar Complexity**:
-
-   - Quick Sort vs Merge Sort
-   - Insertion Sort vs Selection Sort
-
-3. **Different Approaches**:
-
-   - Radix Sort vs Quick Sort (non-comparative vs comparative)
-   - Counting Sort vs Merge Sort
-
-4. **Watch the Statistics**:
-   - Some algorithms make fewer comparisons but more swaps
-   - Some are faster but use more comparisons
-   - Time, comparisons, and swaps all tell different parts of the story!
-
-## 🎨 UI Features
-
-- **Modern Design**: Clean, professional interface with smooth animations
-- **Dark Visualization Area**: High contrast for better visibility
-- **Gradient Bars**: Beautiful color gradients for each bar
-- **Real-time Stats**: Live updates of comparisons, swaps, and time
-- **Responsive Controls**: Smooth hover effects and immediate feedback
-- **Grid Background**: Subtle grid for reference
-- **Information Panels**: Compact stats in comparison mode
-- **Result Display**: Clear winner announcement with detailed metrics
-
-## 📊 File Structure
-
-```
-SortVisualizer/
-├── SortVisualizer.java        # Main entry point
-├── SortVisualizerFrame.java   # Main window & UI
-├── BarPanel.java              # Visualization panel
-├── SortingAlgorithms.java     # Algorithm implementations
-└── ToneGenerator.java         # Sound generation
-```
-
-## 🛠 Technical Details
-
-- **Language**: Java 11+
-- **UI Framework**: Swing
-- **Threading**: Multi-threaded for smooth animations
-- **Sound**: MIDI-based audio feedback
-- **Architecture**: MVC pattern with observer updates
-
-## 💡 Performance Notes
-
-- Larger arrays (200+) may take longer to sort with O(n²) algorithms
-- Speed setting affects delay between operations
-- Sound is disabled in comparison mode for better performance
-- Both algorithms in comparison mode run independently
-
-## 🐛 Troubleshooting
-
-**No sound?**
-
-- MIDI may not be available on your system
-- The visualizer will work without sound
-
-**Slow performance?**
-
-- Reduce array size
-- Increase speed setting
-- Disable sound
-
-**Can't switch modes?**
-
-- Stop any running sorting first
-- Mode changes are disabled during sorting
-
-## 📝 License
-
-This is an educational project for learning sorting algorithms and Java GUI programming.
-
-## 🌟 Enjoy visualizing sorting algorithms!
-
-Compare, learn, and understand how different algorithms perform under the same conditions!
+- ✨ 12 sorting algorithms
+- 🎵 Real-time sound effects
+- ⚖️ Side-by-side algorithm comparison
+- 📊 Live statistics (comparisons, swaps, time)
+- 🎨 Modern gradient UI with dark theme
+- ⚡ Adjustable speed and array size
+- 🎯 Visual highlighting of active elements
